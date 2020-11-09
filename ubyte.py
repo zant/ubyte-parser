@@ -1,4 +1,6 @@
 import numpy as np
+import gzip
+import os
 
 IMAGE_MODE = "i"
 LABEL_MODE = "l"
@@ -10,17 +12,27 @@ class UByte:
     def show_image(image):
         for row in image:
             for pixel in row:
-                symbol = "#" if pixel > 127 else "%"
+                symbol = "#" if pixel > 127 else "."
                 print(symbol, end='')
             print("")
 
+    def read_file(self):
+        _, ext = os.path.splitext(self.path)
+
+        if ext == '.gz':
+            self.file = gzip.open(self.path, 'r')
+        else:
+            self.file = open(self.path, 'rb')
+
+
     def __init__(self, path, mode="i", read=10):
         if mode != "i":
-            raise "Parsing labels is coming")
+            raise "Parsing labels is coming"
 
         self.path = path
         self.read = read
-        self.file = open(self.path, 'rb')
+
+        self.read_file()
         self.validate()
 
         self.parse_header()
