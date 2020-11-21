@@ -5,6 +5,10 @@ import os
 IMAGE_MODE = "i"
 LABEL_MODE = "l"
 
+MAGIC_NUMS = {}
+MAGIC_NUMS[IMAGE_MODE] = 2051
+MAGIC_NUMS[LABEL_MODE] = 2049
+
 class UByte:
     isValid = False
 
@@ -26,17 +30,18 @@ class UByte:
 
 
     def __init__(self, path, mode="i", read=10):
-        if mode != "i":
-            raise "Parsing labels is coming"
-
         self.path = path
         self.read = read
+        self.mode = mode
 
         self.read_file()
         self.validate()
 
         self.parse_header()
-        self.parse_contents()
+        if mode == IMAGE_MODE:
+            self.parse_images()
+        else:
+            self.parse_labels()
 
     def __enter__(self):
         return self
@@ -48,7 +53,7 @@ class UByte:
         if self.isValid:
             return 
 
-        if self.read_bytes(4) == 2051:
+        if self.read_bytes(4) == MAGIC_NUMS[self.mode]:
             self.isValid = True
 
     def read_bytes(self, size):
@@ -56,13 +61,20 @@ class UByte:
 
     def parse_header(self):
         self.count = self.read_bytes(4)
-        self.rows = self.read_bytes(4)
-        self.cols = self.read_bytes(4)
+        if self.mode == IMAGE_MODE: 
+            self.rows = self.read_bytes(4)
+            self.cols = self.read_bytes(4)
 
-    def parse_contents(self): 
+    def parse_images(self): 
         buf = self.file.read(self.read * self.cols * self.rows)
         data = np.frombuffer(buf, dtype=np.uint8).astype(np.float32)
         data = data.reshape(self.read, self.rows, self.cols)
+        self.data = data
+
+    def parse_labels(self):
+        buf = self.file.read(self.read)
+        data = np.frombuffer(buf, dtype=np.uint8).astype(np.float32)
+        data = data.reshape(self.read)
         self.data = data
 
     def to_int(self, b):
