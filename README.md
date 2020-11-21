@@ -1,7 +1,7 @@
 # ubyte-reader
 Over-engineered Ubyte parser
 
-Support for directly ubyte and .gz
+Support for directly ubyte or .gz
 
 ## Usage
 
